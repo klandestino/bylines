@@ -28,9 +28,16 @@ class Rest {
 					'type'           => 'array',
 					'show_in_rest'   => array(
 						'schema' => array(
-							'type'  => 'array',
 							'items' => array(
-								'type' => 'string',
+								'type'       => 'object',
+								'properties' => array(
+									'value' => array(
+										'type' => 'string',
+									),
+									'label' => array(
+										'type' => 'string',
+									),
+								),
 							),
 						),
 					),
@@ -54,13 +61,17 @@ class Rest {
 		if ( 'bylines' !== $meta_key ) {
 			return $value;
 		}
-		$byline_display_data = array();
+		$bylines = array();
 		foreach ( get_bylines( $object_id ) as $byline ) {
-			$display_name          = $byline->display_name;
-			$term                  = is_a( $byline, 'WP_User' ) ? 'u' . $byline->ID : $byline->term_id;
-			$byline_display_data[] = (string) $term;
+			$display_name        = $byline->display_name;
+			$term                = is_a( $byline, 'WP_User' ) ? 'u' . $byline->ID : $byline->term_id;
+			$byline_display_data = (object) array(
+				'value' => (string) $term,
+				'label' => $display_name,
+			);
+			$bylines[]           = $byline_display_data;
 		}
-		return array( $byline_display_data );
+		return array( $bylines );
 	}
 
 	/**
@@ -73,10 +84,7 @@ class Rest {
 			array(
 				array(
 					'methods'             => 'GET',
-					'callback'            => function( $request ) {
-						$bylines = Admin_Ajax::get_possible_bylines_for_search( (string) $request['s'] );
-						return rest_ensure_response( $bylines );
-					},
+					'callback'            => array( 'Bylines\Rest', 'get_bylines' ),
 					'permission_callback' => function() {
 						return current_user_can( get_taxonomy( 'byline' )->cap->assign_terms );
 					},
@@ -91,6 +99,66 @@ class Rest {
 		);
 	}
 
+	public static function get_bylines( $request ) {
+		$bylines       = array();
+		$ignored_users = array();
+		$term_args     = array(
+			'taxonomy'   => 'byline',
+			'hide_empty' => false,
+			'number'     => 80,
+		);
+		if ( ! empty( $request['s'] ) ) {
+			$term_args['search'] = (string) $request['s'];
+		}
+		$terms = get_terms( $term_args );
+		if ( $terms && ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$byline_object = Byline::get_by_term_id( $term->term_id );
+
+				$byline_data = array(
+					'value' => (string) $term->term_id,
+					'label' => $term->name,
+				);
+				$bylines[]   = $byline_data;
+
+				if ( $byline_object->user_id ) {
+					$ignored_users[] = (int) $byline_object->user_id;
+				}
+			}
+		}
+		$user_args = array(
+			'number' => 20,
+		);
+		if ( ! empty( $search ) ) {
+			$user_args['search'] = '*' . $search . '*';
+		}
+		if ( ! empty( $ignored_users ) ) {
+			$user_args['exclude'] = array();
+			foreach ( $ignored_users as $val ) {
+				$user_args['exclude'][] = $val;
+			}
+		}
+
+		$users = get_users( $user_args );
+		foreach ( $users as $user ) {
+			$byline_data = array(
+				'value' => 'u' . $user->ID,
+				'label' => $user->display_name,
+			);
+			$bylines[]   = $byline_data;
+		}
+
+		// Sort alphabetically by display name.
+		usort(
+			$bylines,
+			function( $a, $b ) {
+				return strcmp( $a['label'], $b['label'] );
+			}
+		);
+
+		return rest_ensure_response( $bylines );
+	}
+
 	/**
 	 * Save the bylines posted by the block editor.
 	 * Deletes the meta data afterwards since it's only used as
@@ -103,16 +171,16 @@ class Rest {
 				function( $post, $request ) {
 					global $wpdb;
 					if ( ! isset( $request['meta']['bylines'] ) ) {
-						$dirty_bylines = array( 'u' . $post->post_author );
+						$dirty_bylines = array( array( 'value' => 'u' . $post->post_author ) );
 					} else {
 						$dirty_bylines = $request['meta']['bylines'];
 					}
 					$bylines = array();
 					foreach ( $dirty_bylines as $dirty_byline ) {
-						if ( is_numeric( $dirty_byline ) ) {
-							$bylines[] = Byline::get_by_term_id( $dirty_byline );
-						} elseif ( 'u' === $dirty_byline[0] ) {
-							$user_id = (int) substr( $dirty_byline, 1 );
+						if ( is_numeric( $dirty_byline['value'] ) ) {
+							$bylines[] = Byline::get_by_term_id( $dirty_byline['value'] );
+						} elseif ( 0 === strncmp( $dirty_byline['value'], 'u', 1 ) ) {
+							$user_id = (int) substr( $dirty_byline['value'], 1 );
 							$byline  = Byline::get_by_user_id( $user_id );
 							if ( ! $byline ) {
 								$byline = Byline::create_from_user( $user_id );
