@@ -77,7 +77,7 @@ class Rest {
 	/**
 	 * Register the bylines rest api route.
 	 */
-	public static function register_route(): void {
+	public static function register_route() {
 		register_rest_route(
 			'bylines/v1',
 			'/bylines',
@@ -99,6 +99,11 @@ class Rest {
 		);
 	}
 
+	/**
+	 * Get the possible bylines for a given search query.
+	 *
+	 * @param array $request Query variables such as search.
+	 */
 	public static function get_bylines( $request ) {
 		$bylines       = array();
 		$ignored_users = array();
@@ -129,8 +134,8 @@ class Rest {
 		$user_args = array(
 			'number' => 20,
 		);
-		if ( ! empty( $search ) ) {
-			$user_args['search'] = '*' . $search . '*';
+		if ( ! empty( $request['s'] ) ) {
+			$user_args['search'] = '*' . (string) $request['s'] . '*';
 		}
 		if ( ! empty( $ignored_users ) ) {
 			$user_args['exclude'] = array();
