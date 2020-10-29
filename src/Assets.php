@@ -16,6 +16,7 @@ class Assets {
 	 * Enqueue scripts and styles in the admin
 	 */
 	public static function action_admin_enqueue_scripts() {
+
 		$screen = get_current_screen();
 		if ( ! $screen
 			|| ! ( ( 'post' === $screen->base && in_array( $screen->post_type, Content_Model::get_byline_supported_post_types(), true ) )
@@ -65,7 +66,7 @@ class Assets {
 		$script_asset_path = "$dir/assets/block-editor/build/index.asset.php";
 		if ( ! file_exists( $script_asset_path ) ) {
 			throw new Error(
-				'You need to run `npm start` or `npm run build` for the "create-block/promotion-indexing" block first.'
+				'You need to run `npm start` or `npm run build` for the "bylines" plugin first.'
 			);
 		}
 		$index_js     = 'build/index.js';
