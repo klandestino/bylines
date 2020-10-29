@@ -8,10 +8,13 @@ import {
 	select,
 } from '@wordpress/data';
 import { compose } from '@wordpress/compose';
-import Select, { components } from 'react-select';
+import apiFetch from '@wordpress/api-fetch';
+import AsyncSelect from 'react-select/async';
+import { components } from 'react-select';
 import { SortableContainer, SortableElement } from 'react-sortable-hoc';
+import reactSelectStyles from 'gutenberg-react-select-styles';
 const { isSavingPost } = select( 'core/editor' );
-const SortableSelect = SortableContainer( Select );
+const SortableSelect = SortableContainer( AsyncSelect );
 const sortableMultiValue = SortableElement( ( props ) => {
 	const onMouseDown = ( e ) => {
 		e.preventDefault();
@@ -60,11 +63,14 @@ const BylinesRender = ( props ) => {
 					node.getBoundingClientRect()
 				}
 				isMulti
-				options={ props.options }
 				value={ props.selectedBylines }
 				onChange={ ( value ) => props.onBylineChange( value ) }
 				components={ { MultiValue: sortableMultiValue } }
-				closeMenuOnSelect={ false }
+				closeMenuOnSelect={ true }
+				cacheOptions
+				defaultOptions={ props.options }
+				loadOptions={ props.search }
+				styles={ reactSelectStyles }
 			/>
 		</PluginDocumentSettingPanel>
 	);
@@ -109,7 +115,7 @@ const Bylines = compose( [
 		const { editPost } = dispatch( 'core/editor' );
 		const { getEditedPostAttribute } = select( 'core/editor' );
 		const postMeta = getEditedPostAttribute( 'meta' );
-		const arrayMove = function ( array, from, to ) {
+		const arrayMove = ( array, from, to ) => {
 			array = array.slice();
 			array.splice(
 				to < 0 ? array.length + to : to,
@@ -133,6 +139,11 @@ const Bylines = compose( [
 					newIndex
 				);
 				editPost( { meta: { bylines: newValue } } );
+			},
+			search: ( value ) => {
+				return apiFetch( {
+					path: `/bylines/v1/bylines?per_page=100&s=${ value }`,
+				} ).then( ( bylines ) => bylines );
 			},
 		};
 	} ),
