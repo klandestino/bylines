@@ -88,7 +88,7 @@ add_action(
 		add_action( 'init', array( 'Bylines\Rest', 'save_bylines' ) );
 		add_filter( 'get_post_metadata', array( 'Bylines\Rest', 'filter_meta' ), 10, 3 );
 		add_action( 'rest_api_init', array( 'Bylines\Rest', 'register_route' ) );
-		add_action( 'rest_prepare_post', array( 'Bylines\Rest', 'remove_authors_dropdown' ) );
+		add_action( 'init', array( 'Bylines\Rest', 'remove_authors_dropdown' ) );
 	},
 	1
 );
