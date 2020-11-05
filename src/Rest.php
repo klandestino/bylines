@@ -225,8 +225,15 @@ class Rest {
 	 * @param WP_Rest_Response $response The rest response to filter.
 	 */
 	public static function remove_authors_dropdown( $response ) {
-		$response->remove_link( 'wp:action-assign-author' );
-		return $response;
+		foreach ( Content_Model::get_byline_supported_post_types() as $post_type ) {
+			add_action(
+				"rest_prepare_{$post_type}",
+				function( $response ) {
+					$response->remove_link( 'https://api.w.org/action-assign-author' );
+					return $response;
+				}
+			);
+		}
 	}
 
 }
