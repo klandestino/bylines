@@ -75,6 +75,21 @@ class Rest {
 	}
 
 	/**
+	 * We handle the deletion logic for the bylines meta in our save method.
+	 * Just return true here to not make the rest api think something went wrong.
+	 *
+	 * @param null|bool $delete Whether to allow metadata deletion of the given type.
+	 * @param int       $object_id ID of the object metadata is for.
+	 * @param string    $meta_key  Metadata key.
+	 */
+	public static function filter_delete_meta( $delete, $object_id, $meta_key ) {
+		if ( 'bylines' !== $meta_key ) {
+			return $delete;
+		}
+		return true;
+	}
+
+	/**
 	 * Register the bylines rest api route.
 	 */
 	public static function register_route() {
@@ -175,12 +190,17 @@ class Rest {
 				"rest_after_insert_{$post_type}",
 				function( $post, $request ) {
 					global $wpdb;
-					if ( ! isset( $request['meta']['bylines'] ) ) {
-						$dirty_bylines = array( array( 'value' => 'u' . $post->post_author ) );
-					} else {
-						$dirty_bylines = $request['meta']['bylines'];
+					$dirty_bylines = array();
+					$bylines       = array();
+					$is_delete     = false;
+					$meta          = isset( $request['meta'] ) ? $request['meta'] : array();
+					if ( array_key_exists( 'bylines', $meta ) ) {
+						if ( null === $meta['bylines'] ) {
+							$is_delete = true;
+						} else {
+							$dirty_bylines = $meta['bylines'];
+						}
 					}
-					$bylines = array();
 					foreach ( $dirty_bylines as $dirty_byline ) {
 						if ( is_numeric( $dirty_byline['value'] ) ) {
 							$bylines[] = Byline::get_by_term_id( $dirty_byline['value'] );
@@ -196,7 +216,9 @@ class Rest {
 							$bylines[] = $byline;
 						}
 					}
-					Utils::set_post_bylines( $post->ID, $bylines );
+					if ( ! empty( $bylines ) || $is_delete ) {
+						Utils::set_post_bylines( $post->ID, $bylines );
+					}
 					if ( empty( $bylines ) ) {
 						$wpdb->update(
 							$wpdb->posts,
