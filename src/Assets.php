@@ -50,6 +50,8 @@ class Assets {
 
 	/**
 	 * Enqueue scripts in the block editor
+	 *
+	 * @throws Error If js has not been built.
 	 */
 	public static function action_enqueue_block_editor_assets() {
 		if ( ! apply_filters( 'bylines_use_native_block_editor_meta_box', false ) || ! current_user_can( get_taxonomy( 'byline' )->cap->assign_terms ) ) {
