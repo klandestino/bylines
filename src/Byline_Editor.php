@@ -29,22 +29,13 @@ class Byline_Editor {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'name' === $key ) {
-				$new_columns['byline_name']       = __( 'Name', 'bylines' );
+				$new_columns['name']              = $title;
 				$new_columns['byline_user_email'] = __( 'Email', 'bylines' );
 			} else {
 				$new_columns[ $key ] = $title;
 			}
 		}
 		return $new_columns;
-	}
-
-	/**
-	 * Set our custom name column as the primary column
-	 *
-	 * @return string
-	 */
-	public static function filter_list_table_primary_column() {
-		return 'byline_name';
 	}
 
 	/**
@@ -55,14 +46,7 @@ class Byline_Editor {
 	 * @param int    $term_id     Term ID.
 	 */
 	public static function filter_manage_byline_custom_column( $retval, $column_name, $term_id ) {
-		if ( 'byline_name' === $column_name ) {
-			$byline = Byline::get_by_term_id( $term_id );
-			$avatar = get_avatar( $byline->user_email, 32 );
-			// Such hack. Lets us reuse the rendering without duplicate code.
-			$term          = get_term_by( 'id', $term_id, 'byline' );
-			$wp_list_table = _get_list_table( 'WP_Terms_List_Table' );
-			$retval        = $avatar . ' ' . $wp_list_table->column_name( $term );
-		} elseif ( 'byline_user_email' === $column_name ) {
+		if ( 'byline_user_email' === $column_name ) {
 			$byline = Byline::get_by_term_id( $term_id );
 			if ( $byline->user_email ) {
 				$retval = '<a href="' . esc_url( 'mailto:' . $byline->user_email ) . '">' . esc_html( $byline->user_email ) . '</a>';
