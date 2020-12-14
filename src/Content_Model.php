@@ -44,9 +44,9 @@ class Content_Model {
 				'orderby' => 'term_order',
 			),
 			'capabilities'       => array(
-				'manage_terms' => 'list_users',
-				'edit_terms'   => 'list_users',
-				'delete_terms' => 'list_users',
+				'manage_terms' => apply_filters( 'bylines_edit_bylines_capability', 'list_users' ),
+				'edit_terms'   => apply_filters( 'bylines_edit_bylines_capability', 'list_users' ),
+				'delete_terms' => apply_filters( 'bylines_edit_bylines_capability', 'list_users' ),
 				'assign_terms' => 'edit_others_posts',
 			),
 			'show_ui'            => true,
