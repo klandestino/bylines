@@ -65,7 +65,7 @@ class Rest {
 		foreach ( get_bylines( $object_id ) as $byline ) {
 			$display_name        = $byline->display_name;
 			$term                = is_a( $byline, 'WP_User' ) ? 'u' . $byline->ID : $byline->term_id;
-			$byline_display_data = (object) array(
+			$byline_display_data = array(
 				'value' => (string) $term,
 				'label' => $display_name,
 			);
