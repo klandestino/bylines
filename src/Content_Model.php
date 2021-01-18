@@ -53,6 +53,7 @@ class Content_Model {
 			'show_in_quick_edit' => false,
 			'meta_box_cb'        => false,
 		);
+		$args = apply_filters( 'bylines_taxonomy_args', $args );
 		register_taxonomy( 'byline', null, $args );
 	}
 
