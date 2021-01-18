@@ -35,7 +35,7 @@ class Post_Editor {
 		foreach ( $columns as $key => $title ) {
 			$new_columns[ $key ] = $title;
 			if ( 'title' === $key ) {
-				$new_columns['bylines'] = __( 'Bylines', 'bylines' );
+				$new_columns['bylines'] = get_taxonomy( 'byline' )->labels->name;
 			}
 
 			if ( 'author' === $key ) {
