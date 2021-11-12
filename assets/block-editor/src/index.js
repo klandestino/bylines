@@ -130,6 +130,9 @@ const Bylines = compose( [
 		}
 		return {
 			onBylineChange: ( value ) => {
+				if ( value.length === 0 ) {
+					value = null;
+				}
 				editPost( { meta: { bylines: value } } );
 			},
 			onSortEnd: ( { oldIndex, newIndex } ) => {
