@@ -11,18 +11,54 @@ import { compose } from '@wordpress/compose';
 import apiFetch from '@wordpress/api-fetch';
 import AsyncSelect from 'react-select/async';
 import { components } from 'react-select';
-import { SortableContainer, SortableElement } from 'react-sortable-hoc';
 import reactSelectStyles from 'gutenberg-react-select-styles';
+import { DndContext } from '@dnd-kit/core';
+import { restrictToParentElement } from '@dnd-kit/modifiers';
+import {
+	arrayMove,
+	SortableContext,
+	horizontalListSortingStrategy,
+	useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 const { isSavingPost } = select( 'core/editor' );
-const SortableSelect = SortableContainer( AsyncSelect );
-const sortableMultiValue = SortableElement( ( props ) => {
+const MultiValue = ( props ) => {
 	const onMouseDown = ( e ) => {
 		e.preventDefault();
 		e.stopPropagation();
 	};
-	const innerProps = { onMouseDown };
-	return <components.MultiValue { ...props } innerProps={ innerProps } />;
-} );
+	const innerProps = { ...props.innerProps, onMouseDown };
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable( {
+			id: props.data.value,
+		} );
+	const style = {
+		transform: CSS.Transform.toString( transform ),
+		transition,
+	};
+	return (
+		<div
+			style={ style }
+			ref={ setNodeRef }
+			{ ...attributes }
+			{ ...listeners }
+		>
+			<components.MultiValue { ...props } innerProps={ innerProps } />
+		</div>
+	);
+};
+
+const MultiValueRemove = ( props ) => {
+	return (
+		<components.MultiValueRemove
+			{ ...props }
+			innerProps={ {
+				onPointerDown: ( e ) => e.stopPropagation(),
+				...props.innerProps,
+			} }
+		/>
+	);
+};
 
 // First add our rest api endpoint to core's registry.
 dispatch( 'core' ).addEntities( [
@@ -55,23 +91,34 @@ subscribe( () => {
 const BylinesRender = ( props ) => {
 	return (
 		<PluginDocumentSettingPanel name="bylines" title="Bylines">
-			<SortableSelect
-				axis="xy"
-				onSortEnd={ props.onSortEnd }
-				distance={ 4 }
-				getHelperDimensions={ ( { node } ) =>
-					node.getBoundingClientRect()
-				}
-				isMulti
-				value={ props.selectedBylines }
-				onChange={ ( value ) => props.onBylineChange( value ) }
-				components={ { MultiValue: sortableMultiValue } }
-				closeMenuOnSelect={ true }
-				cacheOptions
-				defaultOptions={ props.options }
-				loadOptions={ props.search }
-				styles={ reactSelectStyles }
-			/>
+			<DndContext
+				modifiers={ [ restrictToParentElement ] }
+				onDragEnd={ props.onSortEnd }
+			>
+				<SortableContext
+					items={ props.selectedBylines.map(
+						( item ) => item.value
+					) }
+					strategy={ horizontalListSortingStrategy }
+				>
+					<AsyncSelect
+						isMulti
+						options={ props.options }
+						loadOptions={ props.search }
+						defaultOptions
+						styles={ reactSelectStyles }
+						value={ props.selectedBylines }
+						onChange={ ( value ) => props.onBylineChange( value ) }
+						cacheOptions
+						closeMenuOnSelect
+						noOptionsMessage={ () => 'No Bylines found...' }
+						components={ {
+							MultiValue,
+							MultiValueRemove,
+						} }
+					/>
+				</SortableContext>
+			</DndContext>
 		</PluginDocumentSettingPanel>
 	);
 };
@@ -115,15 +162,6 @@ const Bylines = compose( [
 		const { editPost } = dispatch( 'core/editor' );
 		const { getEditedPostAttribute } = select( 'core/editor' );
 		const postMeta = getEditedPostAttribute( 'meta' );
-		const arrayMove = ( array, from, to ) => {
-			array = array.slice();
-			array.splice(
-				to < 0 ? array.length + to : to,
-				0,
-				array.splice( from, 1 )[ 0 ]
-			);
-			return array;
-		};
 		let selectedBylines = [];
 		if ( postMeta ) {
 			selectedBylines = postMeta.bylines;
@@ -135,7 +173,17 @@ const Bylines = compose( [
 				}
 				editPost( { meta: { bylines: value } } );
 			},
-			onSortEnd: ( { oldIndex, newIndex } ) => {
+			onSortEnd: ( event ) => {
+				const { active, over } = event;
+
+				if ( ! active || ! over ) return;
+
+				const oldIndex = selectedBylines.findIndex(
+					( item ) => item.value === active.id
+				);
+				const newIndex = selectedBylines.findIndex(
+					( item ) => item.value === over.id
+				);
 				const newValue = arrayMove(
 					selectedBylines,
 					oldIndex,

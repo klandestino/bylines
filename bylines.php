@@ -1,19 +1,21 @@
 <?php
 /**
- * Plugin Name:     Bylines
- * Plugin URI:      https://bylines.io
- * Description:     Modern multi-author publishing for WordPress
- * Author:          Daniel Bachhuber, Hand Built
- * Author URI:      https://handbuilt.co
- * Text Domain:     bylines
- * Domain Path:     /languages
- * Version:         0.3.0
- * License:         GPL v3
+ * Plugin Name:       Bylines
+ * Plugin URI:        https://bylines.io
+ * Description:       Modern multi-author publishing for WordPress
+ * Author:            Daniel Bachhuber, Hand Built
+ * Author URI:        https://handbuilt.co
+ * Text Domain:       bylines
+ * Domain Path:       /languages
+ * Version:           0.4.0
+ * Requires at least: 6.0
+ * Requires PHP:      7.0
+ * License:           GPL v3
  *
- * @package         Bylines
+ * @package           Bylines
  */
 
-define( 'BYLINES_VERSION', '0.3.0' );
+define( 'BYLINES_VERSION', '0.4.0' );
 
 /**
  * Bylines Plugin
@@ -32,19 +34,6 @@ define( 'BYLINES_VERSION', '0.3.0' );
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/**
- * Warn when minimum version requirements aren't met
- */
-function bylines_action_admin_notices_warn_requirements() {
-	echo '<div class="error message"><p>' . __( 'Bylines requires at least WordPress 5.3 and PHP 5.6. Please make sure you meet these minimum requirements.', 'bylines' ) . '</p></div>';
-}
-
-if ( version_compare( $GLOBALS['wp_version'], '5.3', '<' )
-	|| version_compare( PHP_VERSION, '5.6', '<' ) ) {
-	add_action( 'admin_notices', 'bylines_action_admin_notices_warn_requirements' );
-	return;
-}
 
 add_action( 'init', array( 'Bylines\Content_Model', 'action_init_register_taxonomies' ) );
 add_action( 'init', array( 'Bylines\Content_Model', 'action_init_late_register_taxonomy_for_object_type' ), 100 );
