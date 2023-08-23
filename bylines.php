@@ -89,6 +89,8 @@ add_filter( 'get_the_archive_description', array( 'Bylines\Integrations\Theme', 
 // Integrations with other systems.
 add_filter( 'the_author', array( 'Bylines\Integrations\RSS', 'filter_the_author' ), 11 );
 add_action( 'rss2_item', array( 'Bylines\Integrations\RSS', 'action_rss2_item' ) );
+add_filter( 'feed_links_extra_show_author_feed', array( 'Bylines\Integrations\RSS', 'filter_feed_links_extra_show_author_feed' ) );
+add_action( 'wp_head', array( 'Bylines\Integrations\RSS', 'action_wp_head' ), 3 );
 
 if ( file_exists( dirname( __FILE__ ) . '/vendor/autoload.php' ) ) {
 	require_once dirname( __FILE__ ) . '/vendor/autoload.php';
