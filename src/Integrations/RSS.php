@@ -8,6 +8,7 @@
 namespace Bylines\Integrations;
 
 use Bylines\Content_Model;
+use Bylines\Objects\Byline;
 
 /**
  * Render bylines within WordPress' default RSS feed templates.
@@ -42,6 +43,40 @@ class RSS {
 		foreach ( $bylines as $byline ) {
 			echo '<dc:creator><![CDATA[' . esc_html( $byline->display_name ) . ']]></dc:creator>' . PHP_EOL;
 		}
+	}
+
+	/**
+	 * Remove feed link from byline archives.
+	 */
+	public static function filter_feed_links_extra_show_author_feed() {
+		return ! get_queried_object() instanceof Byline;
+	}
+
+	/**
+	 * Correct feed link in <head>
+	 */
+	public static function action_wp_head() {
+		if ( ! is_author() ) {
+			return;
+		}
+		$byline = get_queried_object();
+		if ( ! $byline instanceof Byline ) {
+			return;
+		}
+		$href  = str_replace( 'feed/', "{$byline->user_nicename}/feed/", get_author_feed_link( 0 ) );
+		$title = sprintf(
+			/* translators: 1: Blog name, 2: Separator (raquo), 3: Author name. */
+			__( '%1$s %2$s Posts by %3$s Feed' ),
+			get_bloginfo( 'name' ),
+			_x( '&raquo;', 'feed link' ),
+			$byline->name
+		);
+		printf(
+			'<link rel="alternate" type="%s" title="%s" href="%s" />' . "\n",
+			feed_content_type(),
+			esc_attr( $title ),
+			esc_url( $href )
+		);
 	}
 
 	/**
