@@ -90,7 +90,11 @@ subscribe( () => {
 // Let's roll out the native block editor meta box!
 const BylinesRender = ( props ) => {
 	return (
-		<PluginDocumentSettingPanel name="bylines" title="Bylines">
+		<PluginDocumentSettingPanel
+			name="bylines"
+			title="Bylines"
+			className="bylines-settings-panel"
+		>
 			<DndContext
 				modifiers={ [ restrictToParentElement ] }
 				onDragEnd={ props.onSortEnd }
