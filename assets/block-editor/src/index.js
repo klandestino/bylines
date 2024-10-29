@@ -7,7 +7,7 @@ import {
 	subscribe,
 	select,
 } from '@wordpress/data';
-import { compose } from '@wordpress/compose';
+import { compose, ifCondition } from '@wordpress/compose';
 import apiFetch from '@wordpress/api-fetch';
 import AsyncSelect from 'react-select/async';
 import { components } from 'react-select';
@@ -129,8 +129,9 @@ const BylinesRender = ( props ) => {
 
 const Bylines = compose( [
 	withSelect( () => {
-		const { getEditedPostAttribute } = select( 'core/editor' );
+		const { getEditedPostAttribute, getCurrentPostType } = select( 'core/editor' );
 		const postMeta = getEditedPostAttribute( 'meta' );
+		const postType = getCurrentPostType();
 		const options = [];
 		const bylines = select( 'core' ).getEntityRecords(
 			'bylines/v1',
@@ -160,6 +161,7 @@ const Bylines = compose( [
 		return {
 			selectedBylines,
 			options,
+			postType,
 		};
 	} ),
 	withDispatch( () => {
@@ -201,6 +203,10 @@ const Bylines = compose( [
 				} ).then( ( bylines ) => bylines );
 			},
 		};
+	} ),
+	ifCondition( ( { postType } ) => {
+		const supportedPostTypes = window.bylines_supported_post_types;
+		return supportedPostTypes.includes( postType );
 	} ),
 ] )( BylinesRender );
 
