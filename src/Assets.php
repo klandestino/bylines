@@ -60,7 +60,8 @@ class Assets {
 		$screen = get_current_screen();
 
 		// Only render on supported post types.
-		if ( ! in_array( $screen->post_type, Content_Model::get_byline_supported_post_types(), true ) ) {
+		$supported_post_types = Content_Model::get_byline_supported_post_types();
+		if ( ! in_array( $screen->post_type, $supported_post_types, true ) ) {
 			return;
 		}
 
@@ -79,6 +80,12 @@ class Assets {
 			$script_asset['dependencies'],
 			$script_asset['version'],
 			true
+		);
+		$supported_post_types = wp_json_encode( $supported_post_types );
+		wp_add_inline_script(
+			'bylines-block-editor',
+			"window.bylines_supported_post_types = {$supported_post_types};",
+			'before'
 		);
 	}
 }
