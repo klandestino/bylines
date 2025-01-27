@@ -219,18 +219,6 @@ class Rest {
 					if ( ! empty( $bylines ) || $is_delete ) {
 						Utils::set_post_bylines( $post->ID, $bylines );
 					}
-					if ( empty( $bylines ) ) {
-						$wpdb->update(
-							$wpdb->posts,
-							array(
-								'post_author' => 0,
-							),
-							array(
-								'ID' => $post->ID,
-							)
-						);
-						clean_post_cache( $post->ID );
-					}
 					delete_post_meta( $post->ID, 'bylines' );
 					return $post;
 				},
