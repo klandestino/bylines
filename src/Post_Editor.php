@@ -60,7 +60,7 @@ class Post_Editor {
 		$bylines_str = array();
 		foreach ( $bylines as $byline ) {
 			$args = array(
-				'author_name' => $byline->slug,
+				'byline' => $byline->slug,
 			);
 			if ( 'post' !== $post_type ) {
 				$args['post_type'] = $post_type;
