@@ -7,7 +7,7 @@ import {
 	subscribe,
 	select,
 } from '@wordpress/data';
-import { compose, ifCondition } from '@wordpress/compose';
+import { compose, ifCondition, debounce } from '@wordpress/compose';
 import apiFetch from '@wordpress/api-fetch';
 import AsyncSelect from 'react-select/async';
 import { components } from 'react-select';
@@ -110,6 +110,7 @@ const optionsFromBylines = ( bylines, selectedBylines ) => {
 
 // Let's roll out the native block editor meta box!
 const BylinesRender = ( props ) => {
+	const options = optionsFromBylines( props.bylines, props.selectedBylines );
 	return (
 		<PluginDocumentSettingPanel
 			name="bylines"
@@ -128,15 +129,15 @@ const BylinesRender = ( props ) => {
 				>
 					<AsyncSelect
 						isMulti
-						options={ optionsFromBylines( props.bylines, props.selectedBylines ) }
-						loadOptions={ props.search }
-						defaultOptions
+						options={ options }
+						defaultOptions={ options }
+						loadOptions={ debounce( props.search, 200, { leading: true } ) }
 						styles={ reactSelectStyles }
 						value={ props.selectedBylines }
 						onChange={ ( value ) => props.onBylineChange( value ) }
 						cacheOptions
 						closeMenuOnSelect
-						noOptionsMessage={ () => 'No Bylines found...' }
+						noOptionsMessage={ () => 'No bylines found...' }
 						components={ {
 							MultiValue,
 							MultiValueRemove,
@@ -153,7 +154,11 @@ const Bylines = compose( [
 		const { getEditedPostAttribute, getCurrentPostType } = select( 'core/editor' );
 		const postMeta = getEditedPostAttribute( 'meta' );
 		const postType = getCurrentPostType();
-		let bylines;
+		const bylines = select( 'core' ).getEntityRecords(
+			'bylines/v1',
+			'bylines',
+			{ per_page: 10 }
+		);
 		let selectedBylines = [];
 		if ( postMeta && postMeta.bylines ) {
 			selectedBylines = postMeta.bylines;
@@ -199,7 +204,7 @@ const Bylines = compose( [
 			},
 			search: ( value ) => {
 				return apiFetch( {
-					path: `/bylines/v1/bylines?per_page=50&s=${ value }`,
+					path: `/bylines/v1/bylines?per_page=20&s=${ value }`,
 				} ).then( ( bylines ) => bylines );
 			},
 		};
