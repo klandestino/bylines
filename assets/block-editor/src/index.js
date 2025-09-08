@@ -87,6 +87,27 @@ subscribe( () => {
 	}
 } );
 
+const optionsFromBylines = ( bylines, selectedBylines ) => {
+	const options = [];
+	if ( bylines ) {
+		bylines.forEach( ( byline ) => {
+			options.push( {
+				value: byline.value,
+				label: byline.label,
+			} );
+		} );
+	}
+	if ( selectedBylines ) {
+		selectedBylines.forEach( ( byline ) => {
+			options.push( {
+				value: byline.value,
+				label: byline.label,
+			} );
+		} );
+	}
+	return options;
+}
+
 // Let's roll out the native block editor meta box!
 const BylinesRender = ( props ) => {
 	return (
@@ -107,7 +128,7 @@ const BylinesRender = ( props ) => {
 				>
 					<AsyncSelect
 						isMulti
-						options={ props.options }
+						options={ optionsFromBylines( props.bylines, props.selectedBylines ) }
 						loadOptions={ props.search }
 						defaultOptions
 						styles={ reactSelectStyles }
@@ -132,35 +153,14 @@ const Bylines = compose( [
 		const { getEditedPostAttribute, getCurrentPostType } = select( 'core/editor' );
 		const postMeta = getEditedPostAttribute( 'meta' );
 		const postType = getCurrentPostType();
-		const options = [];
-		const bylines = select( 'core' ).getEntityRecords(
-			'bylines/v1',
-			'bylines',
-			{ per_page: -1 }
-		);
+		let bylines;
 		let selectedBylines = [];
 		if ( postMeta && postMeta.bylines ) {
 			selectedBylines = postMeta.bylines;
 		}
-		if ( bylines ) {
-			bylines.forEach( ( byline ) => {
-				options.push( {
-					value: byline.value,
-					label: byline.label,
-				} );
-			} );
-		}
-		if ( selectedBylines ) {
-			selectedBylines.forEach( ( byline ) => {
-				options.push( {
-					value: byline.value,
-					label: byline.label,
-				} );
-			} );
-		}
 		return {
 			selectedBylines,
-			options,
+			bylines,
 			postType,
 		};
 	} ),
@@ -199,7 +199,7 @@ const Bylines = compose( [
 			},
 			search: ( value ) => {
 				return apiFetch( {
-					path: `/bylines/v1/bylines?per_page=100&s=${ value }`,
+					path: `/bylines/v1/bylines?per_page=50&s=${ value }`,
 				} ).then( ( bylines ) => bylines );
 			},
 		};
